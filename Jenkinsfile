@@ -1,6 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        // Enable SMTP debug logging
+        SMTP_DEBUG = 'true'
+        
+        // Increase SMTP connection and read timeouts (in milliseconds)
+        SMTP_CONNECTION_TIMEOUT = '15000'
+        SMTP_TIMEOUT = '15000'
+    }
+
     stages {
         stage('Build') {
             steps {
@@ -48,12 +57,14 @@ pipeline {
 
     post {
         always {
-            emailext (
-                to: 'maxiecletus@gmail.com',
-                subject: "Build ${currentBuild.fullDisplayName}",
-                body: "Build ${currentBuild.fullDisplayName} finished with status ${currentBuild.result}",
-                attachLog: true
-            )
+            retry(3) {
+                emailext (
+                    to: 'maxiecletus@gmail.com',
+                    subject: "Build ${currentBuild.fullDisplayName}",
+                    body: "Build ${currentBuild.fullDisplayName} finished with status ${currentBuild.result}",
+                    attachLog: true
+                )
+            }
         }
     }
 }
